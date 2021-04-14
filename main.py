@@ -53,7 +53,7 @@ def icons8_get(id):
 
 @app.get("/icons/{name}")
 async def get_icon(name):
-    matching_icons = difflib.get_close_matches(name, [filename.split('.')[0] for filename in os.listdir(SVG_PATH)])
+    matching_icons = difflib.get_close_matches(name.lower(), [filename.split('.')[0] for filename in os.listdir(SVG_PATH)])
     if len(matching_icons) == 0:
         raise HTTPException(status_code=404, detail="No icons available for this name")
     filepath = os.path.join(SVG_PATH, '{}.svg'.format(matching_icons[0]))
