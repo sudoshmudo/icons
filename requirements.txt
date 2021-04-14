@@ -1,0 +1,6 @@
+fastapi==0.61.2
+pydantic==1.7.2
+python-dotenv==0.15.0
+requests==2.24.0
+svglib==1.1.0
+uvicorn==0.12.2
