@@ -29,3 +29,8 @@ systemctl start icons
 systemctl restart icons
 systemctl status icons
 ```
+
+Issues with PIL or Image module could be fixed with:
+```
+apt-get install libopenjp2-7
+```
