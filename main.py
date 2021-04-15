@@ -59,8 +59,10 @@ async def get_icon(name):
     filepath = os.path.join(SVG_PATH, '{}.svg'.format(matching_icons[0]))
 
     drawing = svg2rlg(filepath)
+    drawing.scale(1.7, 1.7)
+    drawing.translate(5.5, 5.5)
     io_file = io.BytesIO()
-    renderPM.drawToFile(drawing, io_file, fmt=OUTPUT_FORMAT)
+    renderPM.drawToFile(drawing, io_file, dpi=150, fmt=OUTPUT_FORMAT, bg=0xe5e5ea)
     return base64.b64encode(io_file.getvalue())
 
 @app.post("/icons/")
