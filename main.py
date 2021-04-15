@@ -4,6 +4,8 @@ import io
 import os
 import subprocess
 import sys
+import threading
+import time
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -17,6 +19,7 @@ load_dotenv()
 
 ICONS8_TOKEN = os.environ['ICONS8_TOKEN']
 
+DEFAULT_ICON_NAME = 'default'
 ICONS8_GET_URL = 'https://api-icons.icons8.com/publicApi/icons/icon'
 ICONS8_SEARCH_URL = 'https://search.icons8.com/api/iconsets/v5/search'
 OK = 'OK'
@@ -51,11 +54,34 @@ def icons8_get(id):
     request_model.prepare_url(ICONS8_GET_URL, params)
     return requests.get(request_model.url).json()['icon']['svg']
 
+def background_task(task, args):
+    thread = threading.Thread(target=task, args=args)
+    thread.daemon = True
+    thread.start()
+
+def create_new_icon(icon: Icon):
+    keyword = icon.name
+    if (icon.keyword is not None):
+        keyword = icon.keyword
+
+    try:
+        icon_id = icons8_search(keyword, icon.platform)
+        icon_svg = icons8_get(icon_id)
+    except:
+        with open(os.path.join(SVG_PATH, '{}.svg'.format(DEFAULT_ICON_NAME)), 'r') as f:
+            icon_svg = f.read()
+
+    with open(os.path.join(SVG_PATH, '{}.svg'.format(icon.name)), 'w') as f:
+        f.write(icon_svg)
+    
 @app.get("/icons/{name}")
 async def get_icon(name):
     matching_icons = difflib.get_close_matches(name.lower(), [filename.split('.')[0] for filename in os.listdir(SVG_PATH)])
+    
     if len(matching_icons) == 0:
+        background_task(create_new_icon, (Icon(name=name.lower()),))
         raise HTTPException(status_code=404, detail="No icons available for this name")
+
     filepath = os.path.join(SVG_PATH, '{}.svg'.format(matching_icons[0]))
 
     drawing = svg2rlg(filepath)
@@ -67,14 +93,5 @@ async def get_icon(name):
 
 @app.post("/icons/")
 async def create_icon(icon: Icon):
-    keyword = icon.name
-    if (icon.keyword is not None):
-        keyword = icon.keyword
-
-    icon_id = icons8_search(keyword, icon.platform)
-    icon_svg = icons8_get(icon_id)
-
-    with open(os.path.join(SVG_PATH, '{}.svg'.format(icon.name)), 'w') as f:
-        f.write(icon_svg)
-
+    create_new_icon(icon)
     return OK
